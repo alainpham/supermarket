@@ -12,6 +12,7 @@ docker network create --driver=bridge --subnet=172.19.0.0/16 --gateway=172.19.0.
 docker run -d --rm --net mainnet \
     -p 7080:8080 \
     -e OTEL_JAVAAGENT_ENABLED="false" \
+    -e INVENTORY_URL="http://inventory:8080" \
     --name markethub markethub:1.0.0
 
 
