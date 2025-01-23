@@ -18,6 +18,17 @@ $(document).ready(
 
         //web socket connection
         connectSocket()
+
+        //initialise session
+        sessionStorage.getItem('username') || sessionStorage.setItem('username', crypto.randomUUID());
+        console.log('username id: ' + sessionStorage.getItem('username'));
+
+        $.get('/info', 
+            function (response) {
+                console.log(response);
+            }
+        );
+
     }
 );
 
@@ -85,7 +96,7 @@ function formAsJson(formid) {
 
 //table manupulation
 
-function populateTableHeader(tableId, dataTable) {
+function populateTableHeader(tableId, dataTable,type) {
     var table = $(tableId);
     if (table.find('thead').length === 0) {
         var headers = Object.keys(dataTable[0]);
@@ -96,6 +107,9 @@ function populateTableHeader(tableId, dataTable) {
                 tr.append($('<th></th>').text(header));
             }
         );
+        var additionalHeaders = conditionalHeaders(type);
+        console.log('additional headers: ' + additionalHeaders);
+        tr.append(additionalHeaders);
         thead.append(tr);
         table.append(thead);
     }
@@ -113,7 +127,7 @@ function populateTableBody(tableId, dataTable) {
 }
 
 function appendToTable(tableId, dataTable,type) {
-    populateTableHeader(tableId, dataTable);
+    populateTableHeader(tableId, dataTable,type);
     var tbody = populateTableBody(tableId, dataTable);
     //for eah element in the data table
     dataTable.forEach(
@@ -121,6 +135,7 @@ function appendToTable(tableId, dataTable,type) {
         function (data) {
             var row = $('<tr></tr>');
             row.attr('name', data.id);
+            tbody.append(row);
             populateCells(tbody,row, data, type);
     });
 }
@@ -128,7 +143,7 @@ function appendToTable(tableId, dataTable,type) {
 
 function upsertToTable(tableId, dataTable,type) {
     
-    populateTableHeader(tableId, dataTable);
+    populateTableHeader(tableId, dataTable,type);
     var tbody = populateTableBody(tableId, dataTable);
 
     //for each element in the data table
@@ -140,8 +155,10 @@ function upsertToTable(tableId, dataTable,type) {
             if (row.length === 0) { //row does not
                 var row = $('<tr></tr>');
                 row.attr('name', data.id);
+                tbody.append(row);
             }
             else { //row exists
+                console.log('row exists');
                 row.empty();
             }
             populateCells(tbody,row, data, type);
@@ -151,6 +168,7 @@ function upsertToTable(tableId, dataTable,type) {
 
 function populateCells(tbody,row, data, type) {
     //for each key in the data row create a cell
+    var additionalCells = [];
     Object.keys(data).forEach(
         function (key) {
             var cell = $('<td></td>').text(data[key]);
@@ -161,14 +179,18 @@ function populateCells(tbody,row, data, type) {
             if (conditionalClass != null) {
                 cell.addClass(conditionalClass);
             }
+
             //conditional actions
             var action = conditionalActions(type, key, data[key]);
             if (action != null) {
-                cell.append(action);
+                additionalCells.push(action);
             }
+
         }
     );
-    tbody.append(row);
+    for (var i = 0; i < additionalCells.length; i++) {
+        row.append(additionalCells[i]);
+    }
     flashAnimate(row);
 }
 

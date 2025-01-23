@@ -8,6 +8,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import jakarta.persistence.LockModeType;
+import jakarta.transaction.Transactional;
 import supermarket.model.ItemInventory;
 import supermarket.model.Person;
 import supermarket.repo.ItemInventoryRepository;
@@ -49,16 +52,21 @@ public class Service {
     }
 
 
-    @GetMapping("/items")
-    public List<ItemInventory> getItems() {
-        return itemInventoryRepository.findAll();
-    }
-
     @PostMapping("/createItem")
     public ItemInventory createItem(@RequestBody ItemInventory itemInventory) {
         return itemInventoryRepository.save(itemInventory);
     }
 
+    @GetMapping("/items")
+    public List<ItemInventory> getItems() {
+        return itemInventoryRepository.findAll();
+    }
+
+    @GetMapping("/item/{id}")
+    public ItemInventory getItem(Long id) throws Exception {
+        return itemInventoryRepository.findById(id).orElseThrow(() -> new Exception("Item not found"));
+    }
+    
     @PostMapping("/updateItem")
     public ItemInventory updateItem(@RequestBody ItemInventory itemInventory) throws Exception {
         if (itemInventoryRepository.findById(itemInventory.getId()).isPresent()) {
@@ -67,9 +75,22 @@ public class Service {
             throw new Exception("Item not found");
         }
     }
+    
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @PostMapping("/updateMarketPrice")
+    public ItemInventory updateMarketPrice(@RequestBody ItemInventory itemInventory) throws Exception {
+        ItemInventory i = itemInventoryRepository.findOneByItemName(itemInventory.getItemName());
+        if (i != null) {
+            i.setUnitMarketPrice(itemInventory.getUnitMarketPrice());
+            itemInventoryRepository.save(i);
+            return  i;
+        }else {
+            throw new Exception("Item not found");
+        }
+    }
 
-    @GetMapping("/item/{id}")
-    public ItemInventory getItem(Long id) throws Exception {
-        return itemInventoryRepository.findById(id).orElseThrow(() -> new Exception("Item not found"));
+    @PostMapping("/deleteItem")
+    public void deleteItem(@RequestBody ItemInventory itemInventory) {
+        itemInventoryRepository.delete(itemInventory);
     }
 }

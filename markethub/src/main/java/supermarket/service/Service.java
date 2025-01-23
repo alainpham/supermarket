@@ -20,6 +20,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import jakarta.servlet.http.HttpSession;
 import supermarket.model.ItemInventory;
 import supermarket.model.Order;
 import supermarket.model.Person;
@@ -32,6 +33,9 @@ public class Service {
 
     @Value("${inventory.url}")
     private String inventoryUrl;
+    
+    @Value("${ordermanager.url}")
+    private String orderManagerUrl;
 
     private RestTemplate restTemplate = new RestTemplate();
 
@@ -63,7 +67,20 @@ public class Service {
     public Order placeOrder(@RequestBody Order order) {
         logger.info(order.toString());
         //stub need to call ordermanagement service.
+        Order output = restTemplate.postForObject(orderManagerUrl + "/createOrder", order, Order.class);
         //order management should send message to the engine to be processed.
-        return order;
+        return output;
+    }
+
+    @GetMapping("/orders")
+    public List<Order> getOrders() {
+        List<Order> orders = Arrays.asList(restTemplate.getForObject(orderManagerUrl + "/orders", Order[].class));
+        return orders;
+    }
+
+    @GetMapping("/info")
+    public String info(HttpSession session) {
+        logger.info("Session ID: " + session.getId());
+        return "Session ID: " + session.getId();
     }
 }

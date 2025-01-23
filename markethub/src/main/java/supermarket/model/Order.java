@@ -5,13 +5,14 @@ public class Order {
     
     private Long id;
     private String itemName;
-    
+    private String username;
     // buy or sell
     private String type;
-    private String quantity;
+    private Long quantity;
     private Long unitPrice;
 
     public Long getId() {
+
         return id;
     }
 
@@ -30,17 +31,29 @@ public class Order {
     public void setType(String type) {
         this.type = type;
     }
-    public String getQuantity() {
+
+    
+    public Long getQuantity() {
         return quantity;
     }
-    public void setQuantity(String quantity) {
+
+    public void setQuantity(Long quantity) {
         this.quantity = quantity;
     }
+
     public Long getUnitPrice() {
         return unitPrice;
     }
     public void setUnitPrice(Long unitPrice) {
         this.unitPrice = unitPrice;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     @Override

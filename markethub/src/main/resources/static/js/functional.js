@@ -52,22 +52,52 @@ function conditionalFormatting(type,key,value){
     }
 }
 
+//conditional header
+function conditionalHeaders(type){
+    if (type == 'item'){
+        return '<th>actions</th>';
+    }
+    else if (type == 'order'){
+        return '<th>actions</th>';
+    }
+    else {
+        return null
+    }
+}
+
 //adding actions to table
 function conditionalActions(type, key, value){
     if (type == 'item' && key == 'id'){
-        return '<button class="action" name="' + value + '">Edit Order</button>';
+        return '<td><button class="buy" name="' + value + '">Buy</button><button class="sell" name="' + value + '">Sell</button></td>';
+    }
+    if (type == 'order' && key == 'id'){
+        return '<td><button class="cancel-order" name="' + value + '">Cancel</button></td>';
     }
 }
 
 $(document).on(
     'click', 
-    ".action", 
+    ".buy", 
     function () {
         var itemId = this.name;
         var obj = globalStore.inventory.find(item => item.id == itemId);
         console.log('action clicked ' + obj.itemName);
         $("input[name='itemName']").val(obj.itemName);
         $("input[name='unitPrice']").val(obj.unitMarketPrice);
+        $("select[name='type']").val("buy");
+    }
+);
+
+$(document).on(
+    'click', 
+    ".sell", 
+    function () {
+        var itemId = this.name;
+        var obj = globalStore.inventory.find(item => item.id == itemId);
+        console.log('action clicked ' + obj.itemName);
+        $("input[name='itemName']").val(obj.itemName);
+        $("input[name='unitPrice']").val(obj.unitMarketPrice);
+        $("select[name='type']").val("sell");
     }
 );
 
@@ -82,9 +112,9 @@ $(document).on(
             data: request,
             contentType: 'application/json',
             success: function(response) {
-                console.log("response from placeOrder");
-                console.log(response);
-                var data = response.data;
+                globalStore.orders.push(response);
+                upsertToTable('#orders-table', [response], 'order');
+
             }
         });  
     }
@@ -107,9 +137,29 @@ $(document).ready(
             $.get(
                 '/items',
                 function(response){
-                    globalStore.inventory = response;
-                    console.log(globalStore.inventory);
-                    upsertToTable('#inventory-table', response, 'item');
+                    if (response.length > 0){
+                        globalStore.inventory = response;
+                        console.log(globalStore.inventory);
+                        upsertToTable('#inventory-table', response, 'item');
+                    }else
+                    {
+                        globalStore.inventory = [];
+                    }
+                }
+            );
+        }
+
+        if ($('#orders-table').length){
+            $.get(
+                '/orders',
+                function(response){
+                    console.log(response);
+                    if (response.length > 0){
+                        globalStore.orders = response;
+                        upsertToTable('#orders-table', response, 'order');
+                    }else {
+                        globalStore.orders = [];
+                    }
                 }
             );
         }
@@ -123,10 +173,28 @@ $(document).on(
         $.get(
             '/items',
             function(response){
-                upsertToTable('#inventory-table', response, 'item');
+                if (response.length > 0){
+                    globalStore.inventory = response;
+                    upsertToTable('#inventory-table', response, 'item');
+                }
             }
         );
     }
 );
 
+$(document).on(
+    'click', 
+    '#update-orders', 
+    function () {
+        $.get(
+            '/orders',
+            function(response){
+                if (response.length > 0){
+                    globalStore.orders = response;
+                    upsertToTable('#orders-table', response, 'order');
+                }
+            }
+        );
+    }
+);
 
